@@ -25,9 +25,28 @@ function CustomTabBar({ state, descriptors, navigation }: any) {
                     allowsRecordingIOS: true,
                     playsInSilentModeIOS: true,
                 });
-                const { recording } = await Audio.Recording.createAsync(
-                    Audio.RecordingOptionsPresets.HIGH_QUALITY
-                );
+                const { recording } = await Audio.Recording.createAsync({
+                    android: {
+                        extension: '.wav',
+                        outputFormat: Audio.AndroidOutputFormat.DEFAULT,
+                        audioEncoder: Audio.AndroidAudioEncoder.DEFAULT,
+                        sampleRate: 16000,
+                        numberOfChannels: 1,
+                        bitRate: 256000,
+                    },
+                    ios: {
+                        extension: '.wav',
+                        outputFormat: Audio.IOSOutputFormat.LINEARPCM,
+                        audioQuality: Audio.IOSAudioQuality.HIGH,
+                        sampleRate: 16000,
+                        numberOfChannels: 1,
+                        bitRate: 256000,
+                        linearPCMBitDepth: 16,
+                        linearPCMIsBigEndian: false,
+                        linearPCMIsFloat: false,
+                    },
+                    web: {},
+                });
                 setRecording(recording);
                 setIsRecording(true);
                 Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
