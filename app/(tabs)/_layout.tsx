@@ -1,16 +1,67 @@
 import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { Audio } from 'expo-av';
 import { BlurView } from 'expo-blur';
 import * as Haptics from 'expo-haptics';
 import { Tabs, useRouter } from 'expo-router';
-import React from 'react';
+import React, { useState } from 'react';
 import { Dimensions, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useMemoryStore } from '../../hooks/use-memory-store';
+import { useWhisperService } from '../../lib/whisper-service';
 
 const { width } = Dimensions.get('window');
 
 function CustomTabBar({ state, descriptors, navigation }: any) {
     const router = useRouter();
     const { memory } = useMemoryStore();
+    const { transcribeAudio, isWhisperReady } = useWhisperService();
+    const [recording, setRecording] = useState<Audio.Recording | null>(null);
+    const [isRecording, setIsRecording] = useState(false);
+
+    const startRecording = async () => {
+        try {
+            const permission = await Audio.requestPermissionsAsync();
+            if (permission.status === 'granted') {
+                await Audio.setAudioModeAsync({
+                    allowsRecordingIOS: true,
+                    playsInSilentModeIOS: true,
+                });
+                const { recording } = await Audio.Recording.createAsync(
+                    Audio.RecordingOptionsPresets.HIGH_QUALITY
+                );
+                setRecording(recording);
+                setIsRecording(true);
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+            }
+        } catch (err) {
+            console.error('Failed to start recording', err);
+        }
+    };
+
+    const stopRecording = async () => {
+        if (!recording) return;
+
+        setIsRecording(false);
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
+
+        try {
+            await recording.stopAndUnloadAsync();
+            const uri = recording.getURI();
+            setRecording(null);
+
+            if (uri) {
+                console.log('Recording stopped and stored at', uri);
+                // Transcribe
+                const text = await transcribeAudio(uri);
+                if (text) {
+                    console.log('Transcribed Text:', text);
+                    // For now, just logging. Could navigate to search or other action
+                    router.push({ pathname: '/search', params: { query: text } });
+                }
+            }
+        } catch (err) {
+            console.error('Failed to stop recording', err);
+        }
+    };
 
     return (
         <View style={styles.tabBarContainer}>
@@ -101,6 +152,18 @@ function CustomTabBar({ state, descriptors, navigation }: any) {
                         activeOpacity={0.7}
                     >
                         <MaterialCommunityIcons name="magnify" size={28} color="#000" />
+                    </TouchableOpacity>
+
+                    <TouchableOpacity
+                        style={[styles.actionItem, isRecording && styles.recordingButton]}
+                        onPress={isRecording ? stopRecording : startRecording}
+                        activeOpacity={0.7}
+                    >
+                        <MaterialCommunityIcons
+                            name={isRecording ? "stop" : "microphone"}
+                            size={28}
+                            color={isRecording ? "#fff" : "#000"}
+                        />
                     </TouchableOpacity>
 
                     <TouchableOpacity
@@ -229,5 +292,8 @@ const styles = StyleSheet.create({
     },
     addButton: {
         backgroundColor: '#006AFF',
+    },
+    recordingButton: {
+        backgroundColor: '#FF3B30',
     },
 });

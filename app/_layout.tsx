@@ -6,11 +6,13 @@ import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import "../global.css";
 import { getDb, syncDb } from '../lib/db';
 import { useIndexingService } from '../lib/indexing-service';
+import { useWhisperService } from '../lib/whisper-service';
 
 const queryClient = new QueryClient();
 
 export default function RootLayout() {
     useIndexingService(); // Runs in background when model is ready
+    useWhisperService(); // Triggers Whisper model download on startup
 
     useEffect(() => {
         const initDb = async () => {
