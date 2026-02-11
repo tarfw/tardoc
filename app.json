@@ -41,7 +41,13 @@
         }
       ],
       "expo-asset",
-      "expo-secure-store"
+      "expo-secure-store",
+      [
+        "expo-speech-recognition",
+        {
+          "microphonePermission": "Allow Doctor to access your microphone for voice commands."
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true,

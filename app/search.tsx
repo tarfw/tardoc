@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { ActivityIndicator, FlatList, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { dbHelpers } from '../lib/db';
 import { useEmbeddingService } from '../lib/embedding-service';
+import { ts } from '../lib/log';
 
 export default function SearchScreen() {
     const router = useRouter();
@@ -13,7 +14,7 @@ export default function SearchScreen() {
     const [isSearching, setIsSearching] = useState(false);
 
     useEffect(() => {
-        console.log('[Search] Embedding Service State:', { isEmbeddingReady, isEmbeddingGenerating, embeddingError });
+        console.log(`${ts()} [Search] Embedding Service State:`, { isEmbeddingReady, isEmbeddingGenerating, embeddingError });
     }, [isEmbeddingReady, isEmbeddingGenerating, embeddingError]);
 
     const handleSearch = async () => {
@@ -45,8 +46,9 @@ export default function SearchScreen() {
             <View style={styles.searchSection}>
                 <View style={styles.searchBar}>
                     <TextInput
-                        style={styles.input}
+                        style={[styles.input, { color: '#000' }]}
                         placeholder="Search concepts (e.g. smart home)..."
+                        placeholderTextColor="#999"
                         value={query}
                         onChangeText={setQuery}
                         onSubmitEditing={handleSearch}

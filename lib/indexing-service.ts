@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { getDb, subscribeToDbChanges } from './db';
 import { useEmbeddingService } from './embedding-service';
+import { ts } from './log';
 
 export function useIndexingService() {
     const { generateEmbedding, isEmbeddingReady } = useEmbeddingService();
@@ -22,7 +23,7 @@ export function useIndexingService() {
         if (!isEmbeddingReady || _isIndexing.current) return;
 
         isIndexingRef(true);
-        console.log('[Indexing] Starting background indexing scan...');
+        console.log(`${ts()} [Indexing] Starting background indexing scan...`);
 
         try {
             const db = await getDb();
@@ -31,7 +32,7 @@ export function useIndexingService() {
             const unindexedNodes = await db.all('SELECT * FROM nodes WHERE embedding IS NULL LIMIT 20');
 
             if (unindexedNodes.length > 0) {
-                console.log(`[Indexing] Found ${unindexedNodes.length} unindexed nodes.`);
+                console.log(`${ts()} [Indexing] Found ${unindexedNodes.length} unindexed nodes.`);
 
                 for (const node of unindexedNodes) {
                     try {
@@ -54,7 +55,7 @@ export function useIndexingService() {
                             setStats(prev => ({ ...prev, totalProcessed: prev.totalProcessed + 1 }));
                         }
                     } catch (e) {
-                        console.error(`[Indexing] Failed to index node ${node.id}:`, e);
+                        console.error(`${ts()} [Indexing] Failed to index node ${node.id}:`, e);
                         setStats(prev => ({ ...prev, totalErrors: prev.totalErrors + 1 }));
                     }
                 }
@@ -64,7 +65,7 @@ export function useIndexingService() {
             const unindexedActors = await db.all('SELECT * FROM actors WHERE vector IS NULL LIMIT 20');
 
             if (unindexedActors.length > 0) {
-                console.log(`[Indexing] Found ${unindexedActors.length} unindexed actors.`);
+                console.log(`${ts()} [Indexing] Found ${unindexedActors.length} unindexed actors.`);
 
                 for (const actor of unindexedActors) {
                     try {
@@ -86,14 +87,14 @@ export function useIndexingService() {
                             setStats(prev => ({ ...prev, totalProcessed: prev.totalProcessed + 1 }));
                         }
                     } catch (e) {
-                        console.error(`[Indexing] Failed to index actor ${actor.id}:`, e);
+                        console.error(`${ts()} [Indexing] Failed to index actor ${actor.id}:`, e);
                         setStats(prev => ({ ...prev, totalErrors: prev.totalErrors + 1 }));
                     }
                 }
             }
 
         } catch (error) {
-            console.error('[Indexing] Indexing process failed:', error);
+            console.error(`${ts()} [Indexing] Indexing process failed:`, error);
         } finally {
             isIndexingRef(false);
             // console.log('[Indexing] Indexing scan complete.');
@@ -108,7 +109,7 @@ export function useIndexingService() {
 
             // Subscribe to DB changes (inserts/syncs)
             const unsubscribe = subscribeToDbChanges(() => {
-                console.log('[Indexing] DB change detected, triggering scan...');
+                console.log(`${ts()} [Indexing] DB change detected, triggering scan...`);
                 indexMissingData();
             });
 

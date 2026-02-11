@@ -6,6 +6,10 @@ import { Tabs, useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import { Dimensions, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useMemoryStore } from '../../hooks/use-memory-store';
+import { transcriptionStore } from '../../hooks/use-transcription-store';
+import { transcribeWithGroq } from '../../lib/groq-service';
+import { ts } from '../../lib/log';
+import { startNativeListening, stopNativeListening } from '../../lib/native-speech-service';
 import { useWhisperService } from '../../lib/whisper-service';
 
 const { width } = Dimensions.get('window');
@@ -21,38 +25,22 @@ function CustomTabBar({ state, descriptors, navigation }: any) {
         try {
             const permission = await Audio.requestPermissionsAsync();
             if (permission.status === 'granted') {
+                // Start native speech recognition FIRST (live mic mode)
+                await startNativeListening();
+
                 await Audio.setAudioModeAsync({
                     allowsRecordingIOS: true,
                     playsInSilentModeIOS: true,
                 });
-                const { recording } = await Audio.Recording.createAsync({
-                    android: {
-                        extension: '.wav',
-                        outputFormat: Audio.AndroidOutputFormat.DEFAULT,
-                        audioEncoder: Audio.AndroidAudioEncoder.DEFAULT,
-                        sampleRate: 16000,
-                        numberOfChannels: 1,
-                        bitRate: 256000,
-                    },
-                    ios: {
-                        extension: '.wav',
-                        outputFormat: Audio.IOSOutputFormat.LINEARPCM,
-                        audioQuality: Audio.IOSAudioQuality.HIGH,
-                        sampleRate: 16000,
-                        numberOfChannels: 1,
-                        bitRate: 256000,
-                        linearPCMBitDepth: 16,
-                        linearPCMIsBigEndian: false,
-                        linearPCMIsFloat: false,
-                    },
-                    web: {},
-                });
+                const { recording } = await Audio.Recording.createAsync(
+                    Audio.RecordingOptionsPresets.HIGH_QUALITY
+                );
                 setRecording(recording);
                 setIsRecording(true);
                 Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
             }
         } catch (err) {
-            console.error('Failed to start recording', err);
+            console.error(`${ts()} Failed to start recording`, err);
         }
     };
 
@@ -68,17 +56,40 @@ function CustomTabBar({ state, descriptors, navigation }: any) {
             setRecording(null);
 
             if (uri) {
-                console.log('Recording stopped and stored at', uri);
-                // Transcribe
-                const text = await transcribeAudio(uri);
-                if (text) {
-                    console.log('Transcribed Text:', text);
-                    // For now, just logging. Could navigate to search or other action
-                    router.push({ pathname: '/search', params: { query: text } });
-                }
+                console.log(`${ts()} Recording stopped and stored at`, uri);
+
+                // Navigate to Agents tab immediately to show progress
+                navigation.navigate('index');
+
+                // Start Triple Transcription
+                transcriptionStore.clear();
+                transcriptionStore.setIsLocalTranscribing(true);
+                transcriptionStore.setIsCloudTranscribing(true);
+                transcriptionStore.setIsNativeTranscribing(true);
+
+                // 1. Cloud Transcription (Fast — sends file to Groq)
+                transcribeWithGroq(uri).then(cloudText => {
+                    transcriptionStore.setCloudText(cloudText);
+                    transcriptionStore.setIsCloudTranscribing(false);
+                    if (cloudText) console.log(`${ts()} [Cloud] Transcribed:`, cloudText);
+                });
+
+                // 2. Native Transcription (was listening live, now stop and get result)
+                stopNativeListening().then(nativeText => {
+                    transcriptionStore.setNativeText(nativeText);
+                    transcriptionStore.setIsNativeTranscribing(false);
+                    if (nativeText) console.log(`${ts()} [Native] Transcribed:`, nativeText);
+                });
+
+                // 3. Local Transcription (Slow — on-device Whisper Tiny)
+                transcribeAudio(uri).then(localText => {
+                    transcriptionStore.setLocalText(localText);
+                    transcriptionStore.setIsLocalTranscribing(false);
+                    if (localText) console.log(`${ts()} [Local] Transcribed:`, localText);
+                });
             }
         } catch (err) {
-            console.error('Failed to stop recording', err);
+            console.error(`${ts()} Failed to stop recording`, err);
         }
     };
 

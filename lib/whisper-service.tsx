@@ -1,7 +1,7 @@
-import { File } from 'expo-file-system';
 import React, { createContext, useContext, useEffect, useMemo } from 'react';
 import { AudioContext } from 'react-native-audio-api';
 import { useSpeechToText, WHISPER_TINY_EN } from 'react-native-executorch';
+import { ts } from './log';
 
 /**
  * Context for the Whisper Service.
@@ -21,22 +21,26 @@ const WHISPER_SAMPLE_RATE = 16000;
 /**
  * Decode an audio file URI to a Float32Array waveform at 16kHz
  * using react-native-audio-api's AudioContext.
+ *
+ * react-native-audio-api's decodeAudioData accepts:
+ * - Local file paths (with or without file:// prefix)
+ * - Remote URLs (http/https)
+ * - ArrayBuffer
+ *
+ * It uses FFmpeg on Android/iOS for decoding, supporting M4A, AAC, WAV, MP3, etc.
  */
 async function decodeAudioToWaveform(audioUri: string): Promise<Float32Array> {
-    // Read the file as ArrayBuffer using expo-file-system's File API
-    const file = new File(audioUri);
-    const arrayBuffer = await file.arrayBuffer();
-
-    // Decode using AudioContext at 16kHz
+    // Create AudioContext at 16kHz — decodeAudioData will resample to this rate
     const audioContext = new AudioContext({ sampleRate: WHISPER_SAMPLE_RATE });
     try {
-        const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
+        // Pass the file URI directly — AudioDecoder handles file:// URIs natively
+        const audioBuffer = await audioContext.decodeAudioData(audioUri);
 
         // Get the first channel's data (mono)
         const channelData = audioBuffer.getChannelData(0);
 
         console.log(
-            `[Whisper] Decoded audio: ${channelData.length} samples, ` +
+            `${ts()} [Whisper] Decoded audio: ${channelData.length} samples, ` +
             `${audioBuffer.sampleRate}Hz, ${audioBuffer.numberOfChannels} channels, ` +
             `duration: ${audioBuffer.duration.toFixed(2)}s`
         );
@@ -65,10 +69,10 @@ export function WhisperProvider({ children }: { children: React.ReactNode }) {
     });
 
     useEffect(() => {
-        if (error) console.error('[ExecuTorch Whisper] Load error:', error);
-        if (isReady) console.log('[ExecuTorch Whisper] Model is ready for inference!');
+        if (error) console.error(`${ts()} [ExecuTorch Whisper] Load error:`, error);
+        if (isReady) console.log(`${ts()} [ExecuTorch Whisper] Model is ready for inference!`);
         if (downloadProgress > 0 && downloadProgress < 1) {
-            console.log(`[ExecuTorch Whisper] Download progress: ${(downloadProgress * 100).toFixed(1)}%`);
+            console.log(`${ts()} [ExecuTorch Whisper] Download progress: ${(downloadProgress * 100).toFixed(1)}%`);
         }
     }, [isReady, error, downloadProgress]);
 
@@ -76,14 +80,14 @@ export function WhisperProvider({ children }: { children: React.ReactNode }) {
         if (!audioUri || !isReady || error) return null;
 
         try {
-            console.log('[ExecuTorch Whisper] Decoding audio file:', audioUri);
+            console.log(`${ts()} [ExecuTorch Whisper] Decoding audio file:`, audioUri);
             const waveform = await decodeAudioToWaveform(audioUri);
 
-            console.log(`[ExecuTorch Whisper] Starting transcription with ${waveform.length} samples...`);
+            console.log(`${ts()} [ExecuTorch Whisper] Starting transcription with ${waveform.length} samples...`);
             const result = await transcribe(waveform);
             return result;
         } catch (e) {
-            console.error('[ExecuTorch Whisper] Failed to transcribe:', e);
+            console.error(`${ts()} [ExecuTorch Whisper] Failed to transcribe:`, e);
             return null;
         }
     };

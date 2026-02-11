@@ -1,5 +1,6 @@
 import { useEffect, useMemo } from 'react';
 import { ALL_MINILM_L6_V2, useTextEmbeddings } from 'react-native-executorch';
+import { ts } from './log';
 
 /**
  * Hook to provide on-device semantic embedding generation.
@@ -29,10 +30,10 @@ export function useEmbeddingService() {
     });
 
     useEffect(() => {
-        if (error) console.error('[ExecuTorch] Load error:', error);
-        if (isReady) console.log('[ExecuTorch] Model is ready for inference!');
+        if (error) console.error(`${ts()} [ExecuTorch] Load error:`, error);
+        if (isReady) console.log(`${ts()} [ExecuTorch] Model is ready for inference!`);
         if (downloadProgress > 0 && downloadProgress < 1) {
-            console.log(`[ExecuTorch] Download progress: ${(downloadProgress * 100).toFixed(1)}%`);
+            console.log(`${ts()} [ExecuTorch] Download progress: ${(downloadProgress * 100).toFixed(1)}%`);
         }
     }, [isReady, error, downloadProgress]);
 
@@ -44,7 +45,7 @@ export function useEmbeddingService() {
         try {
             return await forward(text);
         } catch (e) {
-            console.error('[ExecuTorch] Failed to generate embedding:', e);
+            console.error(`${ts()} [ExecuTorch] Failed to generate embedding:`, e);
             return null;
         }
     };
