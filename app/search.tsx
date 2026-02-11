@@ -40,14 +40,14 @@ export default function SearchScreen() {
                 <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
                     <MaterialCommunityIcons name="arrow-left" size={24} color="#000" />
                 </TouchableOpacity>
-                <Text style={styles.headerTitle}>Semantic Search</Text>
+                <Text style={styles.headerTitle}>Medical Record Search</Text>
             </View>
 
             <View style={styles.searchSection}>
                 <View style={styles.searchBar}>
                     <TextInput
                         style={[styles.input, { color: '#000' }]}
-                        placeholder="Search concepts (e.g. smart home)..."
+                        placeholder="Search records (e.g. diabetes, patient name)..."
                         placeholderTextColor="#999"
                         value={query}
                         onChangeText={setQuery}

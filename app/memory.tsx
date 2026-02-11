@@ -5,9 +5,9 @@ import { useMemoryStore } from '../hooks/use-memory-store';
 import { syncDb } from '../lib/db';
 
 /**
- * REFINED COMMERCE MEMORY CLASSIFICATION
+ * DOCTOR EMR MEMORY CLASSIFICATION
  * Categories: LTM, STM
- * Includes detailed OREvents hierarchy in STM (Clean text version)
+ * Includes detailed Clinical OREvents hierarchy in STM
  */
 
 interface MemoryItem {
@@ -21,83 +21,79 @@ interface MemorySection {
     data: MemoryItem[];
 }
 
-const COMMERCE_MEMORY: MemorySection[] = [
+const EMR_MEMORY: MemorySection[] = [
     {
         title: 'Long-term Memory (LTM)',
         data: [
             { id: 'l1', title: 'Nodes', type: 'parent' },
-            { id: 'l2', title: 'Products Catalog', type: 'child' },
-            { id: 'l3', title: 'Points', type: 'parent' },
-            { id: 'l4', title: 'Inventory Stock Levels', type: 'child' },
-            { id: 'l5', title: 'S3', type: 'parent' },
-            { id: 'l6', title: 'Finalized Order Archives', type: 'child' },
-            { id: 'l7', title: 'Actors', type: 'parent' },
-            { id: 'l8', title: 'People', type: 'child' },
-            { id: 'l9', title: 'Merchants', type: 'child' },
+            { id: 'l2', title: 'Patient Records', type: 'child' },
+            { id: 'l3', title: 'Diagnosis Catalog', type: 'child' },
+            { id: 'l4', title: 'Procedure Templates', type: 'child' },
+            { id: 'l5', title: 'Points', type: 'parent' },
+            { id: 'l6', title: 'Clinic Locations', type: 'child' },
+            { id: 'l7', title: 'Ward / Bed Assignments', type: 'child' },
+            { id: 'l8', title: 'S3', type: 'parent' },
+            { id: 'l9', title: 'Archived Discharge Summaries', type: 'child' },
+            { id: 'l10', title: 'Actors', type: 'parent' },
+            { id: 'l11', title: 'Doctors', type: 'child' },
+            { id: 'l12', title: 'Nurses', type: 'child' },
+            { id: 'l13', title: 'Staff', type: 'child' },
         ],
     },
     {
         title: 'Short-term Memory (STM)',
         data: [
             { id: 's_or', title: 'OREvents', type: 'parent' },
-            // Stock Group
-            { id: 's_or_1', title: '🧱 Stock', type: 'parent' },
-            { id: 's101', title: 'Stock In', type: 'child' },
-            { id: 's102', title: 'Sale Out', type: 'child' },
-            { id: 's103', title: 'Sale Return', type: 'child' },
-            { id: 's104', title: 'Stock Adjust', type: 'child' },
-            { id: 's105', title: 'Stock Transfer Out', type: 'child' },
-            { id: 's106', title: 'Stock Transfer In', type: 'child' },
-            { id: 's107', title: 'Stock Void', type: 'child' },
-            // Invoice Group
-            { id: 's_or_2', title: '🧾 Invoice / Billing', type: 'parent' },
-            { id: 's201', title: 'Invoice Create', type: 'child' },
-            { id: 's202', title: 'Invoice Item Add', type: 'child' },
-            { id: 's203', title: 'Invoice Payment', type: 'child' },
-            { id: 's204', title: 'Invoice Payment Fail', type: 'child' },
-            { id: 's205', title: 'Invoice Void', type: 'child' },
-            { id: 's206', title: 'Invoice Item Define', type: 'child' },
-            { id: 's207', title: 'Invoice Refund', type: 'child' },
-            // Tasks Group
-            { id: 's_or_3', title: '🧑💼 Tasks / Workflow', type: 'parent' },
-            { id: 's301', title: 'Task Create', type: 'child' },
-            { id: 's302', title: 'Task Assign', type: 'child' },
-            { id: 's303', title: 'Task Start', type: 'child' },
-            { id: 's304', title: 'Task Progress', type: 'child' },
-            { id: 's305', title: 'Task Done', type: 'child' },
-            { id: 's306', title: 'Task Fail', type: 'child' },
-            { id: 's307', title: 'Task Block', type: 'child' },
-            { id: 's308', title: 'Task Resume', type: 'child' },
-            { id: 's309', title: 'Task Void', type: 'child' },
-            { id: 's310', title: 'Task Link', type: 'child' },
-            { id: 's311', title: 'Task Comment', type: 'child' },
-            // Accounts Group
-            { id: 's_or_4', title: '💰 Accounts / Ledger', type: 'parent' },
-            { id: 's401', title: 'Account Pay In', type: 'child' },
-            { id: 's402', title: 'Account Pay Out', type: 'child' },
-            { id: 's403', title: 'Account Refund', type: 'child' },
-            { id: 's404', title: 'Account Adjust', type: 'child' },
-            // Orders Group
-            { id: 's_or_5', title: '🚚 Orders / Delivery', type: 'parent' },
-            { id: 's501', title: 'Order Create', type: 'child' },
-            { id: 's502', title: 'Order Ship', type: 'child' },
-            { id: 's503', title: 'Order Deliver', type: 'child' },
-            { id: 's504', title: 'Order Cancel', type: 'child' },
-            // Transport Group
-            { id: 's_or_6', title: '🚕 Transport / Booking / Rental', type: 'parent' },
-            { id: 's601', title: 'Ride Create', type: 'child' },
-            { id: 's602', title: 'Ride Start', type: 'child' },
-            { id: 's603', title: 'Ride Done', type: 'child' },
-            { id: 's604', title: 'Ride Cancel', type: 'child' },
-            { id: 's611', title: 'Booking Create', type: 'child' },
-            { id: 's612', title: 'Booking Done', type: 'child' },
-            { id: 's621', title: 'Rental Start', type: 'child' },
-            { id: 's622', title: 'Rental End', type: 'child' },
+            // Admissions Group
+            { id: 's_or_1', title: '🏥 Admissions', type: 'parent' },
+            { id: 's101', title: 'Patient Admit', type: 'child' },
+            { id: 's102', title: 'Patient Transfer', type: 'child' },
+            { id: 's103', title: 'Patient Discharge', type: 'child' },
+            { id: 's104', title: 'Patient Readmit', type: 'child' },
+            { id: 's105', title: 'Admission Void', type: 'child' },
+            // Prescriptions Group
+            { id: 's_or_2', title: '💊 Prescriptions', type: 'parent' },
+            { id: 's201', title: 'Prescribe', type: 'child' },
+            { id: 's202', title: 'Dispense', type: 'child' },
+            { id: 's203', title: 'Administer', type: 'child' },
+            { id: 's204', title: 'Refill', type: 'child' },
+            { id: 's205', title: 'Cancel Prescription', type: 'child' },
+            { id: 's206', title: 'Adverse Reaction', type: 'child' },
+            // Lab & Diagnostics Group
+            { id: 's_or_3', title: '🔬 Lab & Diagnostics', type: 'parent' },
+            { id: 's301', title: 'Lab Order', type: 'child' },
+            { id: 's302', title: 'Lab Result', type: 'child' },
+            { id: 's303', title: 'Imaging Order', type: 'child' },
+            { id: 's304', title: 'Imaging Result', type: 'child' },
+            { id: 's305', title: 'Biopsy', type: 'child' },
+            // Vitals & Monitoring Group
+            { id: 's_or_4', title: '❤️ Vitals & Monitoring', type: 'parent' },
+            { id: 's401', title: 'Vitals Record', type: 'child' },
+            { id: 's402', title: 'Alert Trigger', type: 'child' },
+            { id: 's403', title: 'ICU Monitor', type: 'child' },
+            { id: 's404', title: 'Pain Assessment', type: 'child' },
+            // Consultations Group
+            { id: 's_or_5', title: '🩺 Consultations', type: 'parent' },
+            { id: 's501', title: 'Consult Request', type: 'child' },
+            { id: 's502', title: 'Consult Complete', type: 'child' },
+            { id: 's503', title: 'Referral Out', type: 'child' },
+            { id: 's504', title: 'Follow-Up Schedule', type: 'child' },
+            // Procedures & Surgery Group
+            { id: 's_or_6', title: '📋 Procedures & Surgery', type: 'parent' },
+            { id: 's601', title: 'Procedure Schedule', type: 'child' },
+            { id: 's602', title: 'Procedure Start', type: 'child' },
+            { id: 's603', title: 'Procedure Complete', type: 'child' },
+            { id: 's604', title: 'Anesthesia Log', type: 'child' },
+            // Billing Group
+            { id: 's_or_7', title: '💰 Billing', type: 'parent' },
+            { id: 's701', title: 'Invoice Create', type: 'child' },
+            { id: 's702', title: 'Payment Received', type: 'child' },
+            { id: 's703', title: 'Insurance Claim', type: 'child' },
+            { id: 's704', title: 'Invoice Void', type: 'child' },
             // Other STM
-            { id: 's_cart', title: 'Current Shopping Cart', type: 'parent' },
-            { id: 's_hist', title: 'Recent Order History', type: 'parent' },
-            { id: 's_intent', title: 'User Session Intent', type: 'parent' },
-            { id: 's_checkout', title: 'Active Checkout State', type: 'parent' },
+            { id: 's_visit', title: 'Active Visit Context', type: 'parent' },
+            { id: 's_hist', title: 'Recent Patient History', type: 'parent' },
+            { id: 's_intent', title: 'Doctor Session Intent', type: 'parent' },
         ],
     },
 ];
@@ -115,7 +111,7 @@ export default function MemoryScreen() {
         <View style={styles.container}>
             <StatusBar barStyle="dark-content" />
             <View style={styles.header}>
-                <Text style={styles.headerTitle}>Commerce Memories</Text>
+                <Text style={styles.headerTitle}>Doctor EMR Memories</Text>
                 <View style={styles.headerButtons}>
                     <TouchableOpacity onPress={() => syncDb()} style={styles.syncButton}>
                         <MaterialCommunityIcons name="sync" size={24} color="#006AFF" />
@@ -127,7 +123,7 @@ export default function MemoryScreen() {
             </View>
 
             <SectionList
-                sections={COMMERCE_MEMORY}
+                sections={EMR_MEMORY}
                 keyExtractor={(item) => item.id}
                 contentContainerStyle={styles.listContent}
                 stickySectionHeadersEnabled={false}

@@ -40,6 +40,14 @@ export default function RootLayout() {
                                 animation: 'slide_from_bottom'
                             }}
                         />
+                        <Stack.Screen
+                            name="node-type-picker"
+                            options={{
+                                presentation: 'transparentModal',
+                                animation: 'slide_from_bottom',
+                                headerShown: false
+                            }}
+                        />
                     </Stack>
                     <StatusBar style="dark" />
                 </SafeAreaView>

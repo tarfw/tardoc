@@ -176,7 +176,7 @@ function CustomTabBar({ state, descriptors, navigation }: any) {
 
                     <TouchableOpacity
                         style={[styles.actionItem, styles.addButton]}
-                        onPress={() => router.push('/add-node')}
+                        onPress={() => router.push('/node-type-picker')}
                         activeOpacity={0.7}
                     >
                         <MaterialCommunityIcons name="plus" size={28} color="#fff" />

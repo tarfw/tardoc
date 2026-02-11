@@ -154,7 +154,7 @@ export const dbHelpers = {
         return result;
     },
 
-    // Nodes (Catalog/Categories/Products)
+    // Nodes (Medical Records: Patients/Diagnoses/Prescriptions)
     getNodes: async (parentid?: string) => {
         const db = await getDb();
         if (parentid) {

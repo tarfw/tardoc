@@ -1,5 +1,5 @@
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import {
     ActivityIndicator,
@@ -16,11 +16,20 @@ import { dbHelpers } from '../lib/db';
 
 export default function AddNodeScreen() {
     const router = useRouter();
+    const params = useLocalSearchParams();
+    // Default to 'Patient' if no type provided
+    const nodeType = (params.type as string) || 'Patient';
+
     const [title, setTitle] = useState('');
-    const [nodeType, setNodeType] = useState('Product');
     const [universalCode, setUniversalCode] = useState('');
-    const [payload, setPayload] = useState('');
     const [isSaving, setIsSaving] = useState(false);
+
+    // Dynamic Payload State
+    const [payloadFields, setPayloadFields] = useState<Record<string, string>>({});
+
+    const handlePayloadChange = (key: string, value: string) => {
+        setPayloadFields(prev => ({ ...prev, [key]: value }));
+    };
 
     const handleSave = async () => {
         if (!title.trim() || !universalCode.trim()) {
@@ -35,19 +44,104 @@ export default function AddNodeScreen() {
                 title: title.trim(),
                 nodetype: nodeType,
                 universalcode: universalCode.trim(),
-                payload: payload.trim() || undefined,
+                payload: JSON.stringify(payloadFields), // Serialize dynamic fields
             };
 
             await dbHelpers.insertNode(newNode);
-            alert('Node saved successfully!');
-            router.back();
+            alert('Record saved successfully!');
+            router.dismissTo('/(tabs)/'); // Go back to root
         } catch (error) {
             console.error('Failed to save node:', error);
-            alert('Error saving node. Check console.');
+            alert('Error saving record. Check console.');
         } finally {
             setIsSaving(false);
         }
     };
+
+    const renderDynamicFields = () => {
+        switch (nodeType) {
+            case 'Patient':
+                return (
+                    <>
+                        <Input label="Date of Birth" placeholder="YYYY-MM-DD" field="dob" />
+                        <Input label="Gender" placeholder="M/F/Other" field="gender" />
+                        <Input label="Contact Number" placeholder="+1..." field="contact" keyboardType="phone-pad" />
+                        <Input label="Address" placeholder="Full address" field="address" multiline />
+                    </>
+                );
+            case 'Diagnosis':
+                return (
+                    <>
+                        <Input label="Severity" placeholder="Mild / Moderate / Severe" field="severity" />
+                        <Input label="Status" placeholder="Acute / Chronic" field="status" />
+                        <Input label="Onset Date" placeholder="YYYY-MM-DD" field="onset_date" />
+                        <Input label="Clinical Notes" placeholder="Detailed observations..." field="notes" multiline />
+                    </>
+                );
+            case 'Prescription':
+                return (
+                    <>
+                        <Input label="Dosage" placeholder="e.g. 500mg" field="dosage" />
+                        <Input label="Frequency" placeholder="e.g. Twice daily" field="frequency" />
+                        <Input label="Duration" placeholder="e.g. 7 days" field="duration" />
+                        <Input label="Instructions" placeholder="e.g. Take after food" field="instructions" multiline />
+                    </>
+                );
+            case 'LabResult':
+                return (
+                    <>
+                        <Input label="Value" placeholder="e.g. 98" field="value" />
+                        <Input label="Unit" placeholder="e.g. mg/dL" field="unit" />
+                        <Input label="Reference Range" placeholder="e.g. 70-100" field="ref_range" />
+                        <Input label="LabProvider" placeholder="Lab Name" field="provider" />
+                    </>
+                );
+            case 'Vitals':
+                return (
+                    <>
+                        <Input label="Value" placeholder="e.g. 120/80" field="value" />
+                        <Input label="Unit" placeholder="e.g. mmHg" field="unit" />
+                        <Input label="Time Taken" placeholder="HH:MM" field="time" />
+                        <Input label="Notes" placeholder="Position, state, etc." field="notes" />
+                    </>
+                );
+            case 'Procedure':
+                return (
+                    <>
+                        <Input label="Date" placeholder="YYYY-MM-DD" field="date" />
+                        <Input label="Provider/Surgeon" placeholder="Dr. Name" field="provider" />
+                        <Input label="Location" placeholder="Clinic/Hospital Room" field="location" />
+                        <Input label="Outcome Notes" placeholder="Successful/Complications..." field="outcome" multiline />
+                    </>
+                );
+            default:
+                return (
+                    <Input
+                        label="Additional Notes"
+                        placeholder="Enter details..."
+                        field="notes"
+                        multiline
+                    />
+                );
+        }
+    };
+
+    // Helper Component for Inputs
+    const Input = ({ label, placeholder, field, multiline, keyboardType }: any) => (
+        <View style={styles.inputGroup}>
+            <Text style={styles.label}>{label}</Text>
+            <TextInput
+                style={[styles.input, multiline && styles.textArea]}
+                placeholder={placeholder}
+                value={payloadFields[field] || ''}
+                onChangeText={(text) => handlePayloadChange(field, text)}
+                multiline={multiline}
+                numberOfLines={multiline ? 3 : 1}
+                keyboardType={keyboardType || 'default'}
+                placeholderTextColor="#A0A0A0"
+            />
+        </View>
+    );
 
     return (
         <KeyboardAvoidingView
@@ -58,66 +152,46 @@ export default function AddNodeScreen() {
                 <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
                     <MaterialCommunityIcons name="arrow-left" size={24} color="#000" />
                 </TouchableOpacity>
-                <Text style={styles.headerTitle}>Add New Node</Text>
+                <View>
+                    <Text style={styles.headerTitle}>Add {nodeType}</Text>
+                    <Text style={styles.headerSubtitle}>New Record</Text>
+                </View>
                 <View style={{ width: 40 }} />
             </View>
 
             <ScrollView contentContainerStyle={styles.scrollContent}>
+                {/* Fixed Fields */}
                 <View style={styles.inputGroup}>
-                    <Text style={styles.label}>Title</Text>
+                    <Text style={styles.label}>Title / Name</Text>
                     <TextInput
                         style={styles.input}
-                        placeholder="e.g. Smart LED Bulb"
+                        placeholder={`Name of ${nodeType}`}
                         value={title}
                         onChangeText={setTitle}
+                        placeholderTextColor="#A0A0A0"
                     />
                 </View>
 
                 <View style={styles.inputGroup}>
-                    <Text style={styles.label}>Node Type</Text>
-                    <View style={styles.typeContainer}>
-                        {['Product', 'Category', 'Collection'].map((type) => (
-                            <TouchableOpacity
-                                key={type}
-                                style={[
-                                    styles.typeButton,
-                                    nodeType === type && styles.typeButtonActive
-                                ]}
-                                onPress={() => setNodeType(type)}
-                            >
-                                <Text style={[
-                                    styles.typeButtonText,
-                                    nodeType === type && styles.typeButtonTextActive
-                                ]}>
-                                    {type}
-                                </Text>
-                            </TouchableOpacity>
-                        ))}
-                    </View>
-                </View>
-
-                <View style={styles.inputGroup}>
-                    <Text style={styles.label}>Universal Code</Text>
+                    <Text style={styles.label}>Universal Code (ID)</Text>
                     <TextInput
                         style={styles.input}
-                        placeholder="e.g. PROD-12345"
+                        placeholder="Unique Identifier (e.g. PT-101)"
                         value={universalCode}
                         onChangeText={setUniversalCode}
                         autoCapitalize="characters"
+                        placeholderTextColor="#A0A0A0"
                     />
                 </View>
 
-                <View style={styles.inputGroup}>
-                    <Text style={styles.label}>Payload (Description/JSON)</Text>
-                    <TextInput
-                        style={[styles.input, styles.textArea]}
-                        placeholder="Additional details about this node..."
-                        value={payload}
-                        onChangeText={setPayload}
-                        multiline
-                        numberOfLines={4}
-                    />
+                {/* Divider */}
+                <View style={styles.divider}>
+                    <Text style={styles.dividerText}>{nodeType} Details</Text>
+                    <View style={styles.dividerLine} />
                 </View>
+
+                {/* Dynamic Fields */}
+                {renderDynamicFields()}
 
                 <TouchableOpacity
                     style={[styles.saveButton, isSaving && styles.saveButtonDisabled]}
@@ -127,7 +201,7 @@ export default function AddNodeScreen() {
                     {isSaving ? (
                         <ActivityIndicator color="#fff" />
                     ) : (
-                        <Text style={styles.saveButtonText}>Save Node</Text>
+                        <Text style={styles.saveButtonText}>Save {nodeType}</Text>
                     )}
                 </TouchableOpacity>
             </ScrollView>
@@ -146,6 +220,7 @@ const styles = StyleSheet.create({
         justifyContent: 'space-between',
         paddingHorizontal: 20,
         paddingBottom: 20,
+        paddingTop: 10,
         borderBottomWidth: 1,
         borderBottomColor: '#f0f0f0',
     },
@@ -156,9 +231,17 @@ const styles = StyleSheet.create({
         fontSize: 18,
         fontWeight: '700',
         color: '#000',
+        textAlign: 'center',
+    },
+    headerSubtitle: {
+        fontSize: 12,
+        color: '#666',
+        textAlign: 'center',
+        marginTop: 2,
     },
     scrollContent: {
         padding: 20,
+        paddingBottom: 40,
     },
     inputGroup: {
         marginBottom: 20,
@@ -166,7 +249,7 @@ const styles = StyleSheet.create({
     label: {
         fontSize: 14,
         fontWeight: '600',
-        color: '#666',
+        color: '#333',
         marginBottom: 8,
     },
     input: {
@@ -175,38 +258,31 @@ const styles = StyleSheet.create({
         borderColor: '#E9ECEF',
         borderRadius: 12,
         paddingHorizontal: 16,
-        paddingVertical: 12,
+        paddingVertical: 14,
         fontSize: 16,
         color: '#000',
     },
     textArea: {
-        height: 100,
+        height: 80,
         textAlignVertical: 'top',
     },
-    typeContainer: {
+    divider: {
         flexDirection: 'row',
-        gap: 10,
-    },
-    typeButton: {
-        flex: 1,
-        paddingVertical: 10,
-        borderRadius: 10,
-        backgroundColor: '#F8F9FA',
         alignItems: 'center',
-        borderWidth: 1,
-        borderColor: '#E9ECEF',
+        marginBottom: 20,
+        marginTop: 10,
     },
-    typeButtonActive: {
-        backgroundColor: '#006AFF',
-        borderColor: '#006AFF',
-    },
-    typeButtonText: {
-        fontSize: 14,
+    dividerText: {
+        fontSize: 13,
         fontWeight: '600',
-        color: '#666',
+        color: '#006AFF',
+        marginRight: 10,
+        textTransform: 'uppercase',
     },
-    typeButtonTextActive: {
-        color: '#fff',
+    dividerLine: {
+        flex: 1,
+        height: 1,
+        backgroundColor: '#f0f0f0',
     },
     saveButton: {
         backgroundColor: '#006AFF',
@@ -214,6 +290,7 @@ const styles = StyleSheet.create({
         paddingVertical: 16,
         alignItems: 'center',
         marginTop: 20,
+        marginBottom: 20,
     },
     saveButtonDisabled: {
         opacity: 0.7,
