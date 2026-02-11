@@ -2,7 +2,8 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
-import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
+import { View } from 'react-native';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 import "../global.css";
 import { getDb, syncDb } from '../lib/db';
 import { useIndexingService } from '../lib/indexing-service';
@@ -30,7 +31,7 @@ export default function RootLayout() {
     return (
         <SafeAreaProvider>
             <QueryClientProvider client={queryClient}>
-                <SafeAreaView style={{ flex: 1, backgroundColor: '#fff' }}>
+                <View style={{ flex: 1, backgroundColor: '#fff' }}>
                     <Stack screenOptions={{ headerShown: false }}>
                         <Stack.Screen name="(tabs)" />
                         <Stack.Screen
@@ -50,7 +51,7 @@ export default function RootLayout() {
                         />
                     </Stack>
                     <StatusBar style="dark" />
-                </SafeAreaView>
+                </View>
             </QueryClientProvider>
         </SafeAreaProvider>
     );

@@ -3,12 +3,12 @@ import { useRouter } from 'expo-router';
 import React from 'react';
 import { Text, TouchableOpacity, View } from 'react-native';
 
-export default function NodeTypePicker() {
-    const router = useRouter();
+interface NodeTypePickerProps {
+    onClose: () => void;
+}
 
-    React.useLayoutEffect(() => {
-        console.log('Drawer Mounted at:', Date.now());
-    }, []);
+export const NodeTypePicker = ({ onClose }: NodeTypePickerProps) => {
+    const router = useRouter();
 
     const nodeTypes = [
         { id: 'Patient', icon: 'account', color: '#006AFF', label: 'Patient' },
@@ -20,17 +20,21 @@ export default function NodeTypePicker() {
     ];
 
     const handleSelect = (type: string) => {
-        router.replace(`/add-node?type=${type}`);
+        onClose();
+        // Use push to navigate to the new screen
+        router.push(`/add-node?type=${type}`);
     };
 
     return (
-        <View className="flex-1 justify-end">
+        <View className="absolute inset-0 z-50 justify-end">
+            {/* Backdrop */}
             <TouchableOpacity
                 className="absolute inset-0 bg-black/40"
-                onPress={() => router.back()}
+                onPress={onClose}
                 activeOpacity={1}
             />
 
+            {/* Drawer Content */}
             <View className="bg-white rounded-t-[25px] p-5 pb-10 overflow-hidden">
                 <View className="w-10 h-1 bg-gray-300 rounded-full self-center mb-5" />
                 <Text className="text-xl font-bold text-black mb-6 text-center">What do you want to add?</Text>
@@ -55,4 +59,4 @@ export default function NodeTypePicker() {
             </View>
         </View>
     );
-}
+};

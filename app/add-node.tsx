@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import {
     ActivityIndicator,
     KeyboardAvoidingView,
+    KeyboardTypeOptions,
     Platform,
     ScrollView,
     StyleSheet,
@@ -13,6 +14,37 @@ import {
     View
 } from 'react-native';
 import { dbHelpers } from '../lib/db';
+
+// Helper Component for Inputs (Defined outside to prevent re-renders)
+const FormInput = React.memo(({
+    label,
+    placeholder,
+    value,
+    onChangeText,
+    multiline,
+    keyboardType
+}: {
+    label: string,
+    placeholder: string,
+    value: string,
+    onChangeText: (text: string) => void,
+    multiline?: boolean,
+    keyboardType?: KeyboardTypeOptions
+}) => (
+    <View style={styles.inputGroup}>
+        <Text style={styles.label}>{label}</Text>
+        <TextInput
+            style={[styles.input, multiline && styles.textArea]}
+            placeholder={placeholder}
+            value={value}
+            onChangeText={onChangeText}
+            multiline={multiline}
+            numberOfLines={multiline ? 3 : 1}
+            keyboardType={keyboardType || 'default'}
+            placeholderTextColor="#A0A0A0"
+        />
+    </View>
+));
 
 export default function AddNodeScreen() {
     const router = useRouter();
@@ -59,89 +91,78 @@ export default function AddNodeScreen() {
     };
 
     const renderDynamicFields = () => {
+        // Helper to bind value and onChangeText for cleaner JSX below
+        const bind = (field: string) => ({
+            value: payloadFields[field] || '',
+            onChangeText: (text: string) => handlePayloadChange(field, text)
+        });
+
         switch (nodeType) {
             case 'Patient':
                 return (
                     <>
-                        <Input label="Date of Birth" placeholder="YYYY-MM-DD" field="dob" />
-                        <Input label="Gender" placeholder="M/F/Other" field="gender" />
-                        <Input label="Contact Number" placeholder="+1..." field="contact" keyboardType="phone-pad" />
-                        <Input label="Address" placeholder="Full address" field="address" multiline />
+                        <FormInput label="Date of Birth" placeholder="YYYY-MM-DD" {...bind('dob')} />
+                        <FormInput label="Gender" placeholder="M/F/Other" {...bind('gender')} />
+                        <FormInput label="Contact Number" placeholder="+1..." {...bind('contact')} keyboardType="phone-pad" />
+                        <FormInput label="Address" placeholder="Full address" {...bind('address')} multiline />
                     </>
                 );
             case 'Diagnosis':
                 return (
                     <>
-                        <Input label="Severity" placeholder="Mild / Moderate / Severe" field="severity" />
-                        <Input label="Status" placeholder="Acute / Chronic" field="status" />
-                        <Input label="Onset Date" placeholder="YYYY-MM-DD" field="onset_date" />
-                        <Input label="Clinical Notes" placeholder="Detailed observations..." field="notes" multiline />
+                        <FormInput label="Severity" placeholder="Mild / Moderate / Severe" {...bind('severity')} />
+                        <FormInput label="Status" placeholder="Acute / Chronic" {...bind('status')} />
+                        <FormInput label="Onset Date" placeholder="YYYY-MM-DD" {...bind('onset_date')} />
+                        <FormInput label="Clinical Notes" placeholder="Detailed observations..." {...bind('notes')} multiline />
                     </>
                 );
             case 'Prescription':
                 return (
                     <>
-                        <Input label="Dosage" placeholder="e.g. 500mg" field="dosage" />
-                        <Input label="Frequency" placeholder="e.g. Twice daily" field="frequency" />
-                        <Input label="Duration" placeholder="e.g. 7 days" field="duration" />
-                        <Input label="Instructions" placeholder="e.g. Take after food" field="instructions" multiline />
+                        <FormInput label="Dosage" placeholder="e.g. 500mg" {...bind('dosage')} />
+                        <FormInput label="Frequency" placeholder="e.g. Twice daily" {...bind('frequency')} />
+                        <FormInput label="Duration" placeholder="e.g. 7 days" {...bind('duration')} />
+                        <FormInput label="Instructions" placeholder="e.g. Take after food" {...bind('instructions')} multiline />
                     </>
                 );
             case 'LabResult':
                 return (
                     <>
-                        <Input label="Value" placeholder="e.g. 98" field="value" />
-                        <Input label="Unit" placeholder="e.g. mg/dL" field="unit" />
-                        <Input label="Reference Range" placeholder="e.g. 70-100" field="ref_range" />
-                        <Input label="LabProvider" placeholder="Lab Name" field="provider" />
+                        <FormInput label="Value" placeholder="e.g. 98" {...bind('value')} />
+                        <FormInput label="Unit" placeholder="e.g. mg/dL" {...bind('unit')} />
+                        <FormInput label="Reference Range" placeholder="e.g. 70-100" {...bind('ref_range')} />
+                        <FormInput label="LabProvider" placeholder="Lab Name" {...bind('provider')} />
                     </>
                 );
             case 'Vitals':
                 return (
                     <>
-                        <Input label="Value" placeholder="e.g. 120/80" field="value" />
-                        <Input label="Unit" placeholder="e.g. mmHg" field="unit" />
-                        <Input label="Time Taken" placeholder="HH:MM" field="time" />
-                        <Input label="Notes" placeholder="Position, state, etc." field="notes" />
+                        <FormInput label="Value" placeholder="e.g. 120/80" {...bind('value')} />
+                        <FormInput label="Unit" placeholder="e.g. mmHg" {...bind('unit')} />
+                        <FormInput label="Time Taken" placeholder="HH:MM" {...bind('time')} />
+                        <FormInput label="Notes" placeholder="Position, state, etc." {...bind('notes')} />
                     </>
                 );
             case 'Procedure':
                 return (
                     <>
-                        <Input label="Date" placeholder="YYYY-MM-DD" field="date" />
-                        <Input label="Provider/Surgeon" placeholder="Dr. Name" field="provider" />
-                        <Input label="Location" placeholder="Clinic/Hospital Room" field="location" />
-                        <Input label="Outcome Notes" placeholder="Successful/Complications..." field="outcome" multiline />
+                        <FormInput label="Date" placeholder="YYYY-MM-DD" {...bind('date')} />
+                        <FormInput label="Provider/Surgeon" placeholder="Dr. Name" {...bind('provider')} />
+                        <FormInput label="Location" placeholder="Clinic/Hospital Room" {...bind('location')} />
+                        <FormInput label="Outcome Notes" placeholder="Successful/Complications..." {...bind('outcome')} multiline />
                     </>
                 );
             default:
                 return (
-                    <Input
+                    <FormInput
                         label="Additional Notes"
                         placeholder="Enter details..."
-                        field="notes"
+                        {...bind('notes')}
                         multiline
                     />
                 );
         }
     };
-
-    // Helper Component for Inputs
-    const Input = ({ label, placeholder, field, multiline, keyboardType }: any) => (
-        <View style={styles.inputGroup}>
-            <Text style={styles.label}>{label}</Text>
-            <TextInput
-                style={[styles.input, multiline && styles.textArea]}
-                placeholder={placeholder}
-                value={payloadFields[field] || ''}
-                onChangeText={(text) => handlePayloadChange(field, text)}
-                multiline={multiline}
-                numberOfLines={multiline ? 3 : 1}
-                keyboardType={keyboardType || 'default'}
-                placeholderTextColor="#A0A0A0"
-            />
-        </View>
-    );
 
     return (
         <KeyboardAvoidingView

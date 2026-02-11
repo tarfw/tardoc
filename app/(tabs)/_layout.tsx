@@ -5,8 +5,10 @@ import * as Haptics from 'expo-haptics';
 import { Tabs, useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import { Dimensions, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { NodeTypePicker } from '../../components/NodeTypePicker';
 import { useMemoryStore } from '../../hooks/use-memory-store';
 import { transcriptionStore } from '../../hooks/use-transcription-store';
+import { useUIStore } from '../../hooks/use-ui-store';
 import { transcribeWithGroq } from '../../lib/groq-service';
 import { ts } from '../../lib/log';
 
@@ -15,6 +17,7 @@ const { width } = Dimensions.get('window');
 function CustomTabBar({ state, descriptors, navigation }: any) {
     const router = useRouter();
     const { memory } = useMemoryStore();
+    const { openNodePicker } = useUIStore();
     const [recording, setRecording] = useState<Audio.Recording | null>(null);
     const [isRecording, setIsRecording] = useState(false);
 
@@ -108,13 +111,10 @@ function CustomTabBar({ state, descriptors, navigation }: any) {
 
                         let iconName: any;
                         if (route.name === 'tasks') {
-                            // Tasks
                             iconName = isFocused ? 'checkbox-marked-circle' : 'checkbox-blank-circle-outline';
                         } else if (route.name === 'index') {
-                            // Agents
                             iconName = isFocused ? 'square-rounded' : 'square-rounded-outline';
                         } else if (route.name === 'relay') {
-                            // Relay
                             iconName = 'asterisk';
                         }
 
@@ -176,7 +176,10 @@ function CustomTabBar({ state, descriptors, navigation }: any) {
 
                     <TouchableOpacity
                         style={[styles.actionItem, styles.addButton]}
-                        onPress={() => router.push('/node-type-picker')}
+                        onPress={() => {
+                            // Instant Open via Store
+                            openNodePicker();
+                        }}
                         activeOpacity={0.7}
                     >
                         <MaterialCommunityIcons name="plus" size={28} color="#fff" />
@@ -188,33 +191,45 @@ function CustomTabBar({ state, descriptors, navigation }: any) {
 }
 
 export default function TabLayout() {
+    const { isNodePickerOpen, closeNodePicker } = useUIStore();
+
     return (
-        <Tabs
-            tabBar={(props) => <CustomTabBar {...props} />}
-            screenOptions={{
-                headerShown: false,
-                tabBarShowLabel: false,
-            }}
-        >
-            <Tabs.Screen
-                name="tasks"
-                options={{
-                    headerTitle: 'Tasks',
+        <View style={{ flex: 1 }}>
+            <Tabs
+                tabBar={(props) => <CustomTabBar {...props} />}
+                screenOptions={{
+                    headerShown: true,
+                    headerTitleAlign: 'left',
+                    headerTitleStyle: {
+                        fontSize: 24,
+                        fontWeight: '800',
+                        color: '#1a1a1a',
+                    },
+                    headerShadowVisible: false,
+                    headerStyle: {
+                        backgroundColor: '#fff',
+                    },
+                    tabBarShowLabel: false,
                 }}
-            />
-            <Tabs.Screen
-                name="index"
-                options={{
-                    headerTitle: 'Agents',
-                }}
-            />
-            <Tabs.Screen
-                name="relay"
-                options={{
-                    headerTitle: 'Relay',
-                }}
-            />
-        </Tabs>
+            >
+                <Tabs.Screen
+                    name="tasks"
+                    options={{ headerTitle: 'Tasks & Appointments' }}
+                />
+                <Tabs.Screen
+                    name="index"
+                    options={{ headerTitle: 'Agents' }}
+                />
+                <Tabs.Screen
+                    name="relay"
+                    options={{ headerTitle: 'Relay' }}
+                />
+            </Tabs>
+
+            {isNodePickerOpen && (
+                <NodeTypePicker onClose={closeNodePicker} />
+            )}
+        </View>
     );
 }
 
@@ -232,7 +247,6 @@ const styles = StyleSheet.create({
         flex: 1,
         marginRight: 15,
         alignItems: 'flex-start',
-        // Removed maxWidth to allow memory selector to expand
     },
     rightWrapper: {
         alignItems: 'flex-end',
@@ -245,7 +259,7 @@ const styles = StyleSheet.create({
         backgroundColor: '#fff',
         paddingHorizontal: 22,
         paddingVertical: 10,
-        borderRadius: 24, // Slightly rounder to match size increase
+        borderRadius: 24,
         flexDirection: 'row',
         alignItems: 'center',
         borderWidth: 1,
@@ -269,7 +283,7 @@ const styles = StyleSheet.create({
         overflow: 'hidden',
         borderWidth: 1,
         borderColor: 'rgba(0,0,0,0.05)',
-        width: width * 0.45, // Fixed width relative to screen, decoupled from wrapper
+        width: width * 0.45,
         justifyContent: 'space-around',
     },
     rightContainer: {

@@ -12,10 +12,6 @@ export default function AgentsScreen() {
 
     return (
         <View style={styles.container}>
-            <Text style={styles.title}>Agents</Text>
-            <Text style={styles.subtitle}>Groq Cloud Transcription</Text>
-
-
             {/* Transcription Card */}
             {hasAnyContent && (
                 <View style={[styles.transcriptionBox, { borderColor: 'rgba(0, 106, 255, 0.15)', marginTop: 15 }]}>
@@ -46,20 +42,14 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
         backgroundColor: '#fff',
-        alignItems: 'center',
-        justifyContent: 'center',
+        paddingHorizontal: 20,
     },
     title: {
-        fontSize: 28,
-        fontWeight: '700',
+        fontSize: 32,
+        fontWeight: '800',
         color: '#1a1a1a',
-        letterSpacing: -0.5,
-    },
-    subtitle: {
-        fontSize: 16,
-        color: '#666',
-        marginTop: 8,
-        marginBottom: 30,
+        letterSpacing: -1,
+        marginBottom: 20,
     },
     transcriptionBox: {
         backgroundColor: '#F5F7FF',
