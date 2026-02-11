@@ -5,75 +5,42 @@ import { useTranscriptionStore } from '../../hooks/use-transcription-store';
 export default function AgentsScreen() {
     const router = useRouter();
     const {
-        localText, cloudText, nativeText,
-        isLocalTranscribing, isCloudTranscribing, isNativeTranscribing,
-        clear
+        text, isTranscribing, clear
     } = useTranscriptionStore();
 
-    const hasAnyContent = localText || cloudText || nativeText ||
-        isLocalTranscribing || isCloudTranscribing || isNativeTranscribing;
+    const hasAnyContent = text || isTranscribing;
 
     return (
         <View style={styles.container}>
             <Text style={styles.title}>Agents</Text>
-            <Text style={styles.subtitle}>Triple Transcription Test</Text>
+            <Text style={styles.subtitle}>Groq Cloud Transcription</Text>
 
-            {/* Local Transcription Card */}
+
+            {/* Transcription Card */}
             {hasAnyContent && (
-                <View style={[styles.transcriptionBox, { borderColor: 'rgba(0, 106, 255, 0.15)' }]}>
-                    <Text style={[styles.transcriptionLabel, { color: '#006AFF' }]}>📱 Local (Whisper Tiny) ~4s</Text>
+                <View style={[styles.transcriptionBox, { borderColor: 'rgba(0, 106, 255, 0.15)', marginTop: 15 }]}>
+                    <Text style={[styles.transcriptionLabel, { color: '#006AFF' }]}>☁️ Groq (Whisper Large-V3-Turbo)</Text>
 
-                    {isLocalTranscribing ? (
+                    {isTranscribing ? (
                         <View style={styles.loadingRow}>
                             <ActivityIndicator size="small" color="#006AFF" />
-                            <Text style={styles.transcribingText}>Transcribing...</Text>
+                            <Text style={[styles.transcribingText, { color: '#006AFF' }]}>Transcribing...</Text>
                         </View>
                     ) : (
-                        <Text style={styles.transcriptionText}>{localText || "Waiting..."}</Text>
-                    )}
-                </View>
-            )}
-
-            {/* Cloud Transcription Card */}
-            {hasAnyContent && (
-                <View style={[styles.transcriptionBox, { borderColor: 'rgba(255, 59, 48, 0.15)', marginTop: 15 }]}>
-                    <Text style={[styles.transcriptionLabel, { color: '#FF3B30' }]}>☁️ Cloud (Groq Large-V3) ~1s</Text>
-
-                    {isCloudTranscribing ? (
-                        <View style={styles.loadingRow}>
-                            <ActivityIndicator size="small" color="#FF3B30" />
-                            <Text style={[styles.transcribingText, { color: '#FF3B30' }]}>Transcribing...</Text>
-                        </View>
-                    ) : (
-                        <Text style={styles.transcriptionText}>{cloudText || "Waiting..."}</Text>
-                    )}
-                </View>
-            )}
-
-            {/* Native Transcription Card */}
-            {hasAnyContent && (
-                <View style={[styles.transcriptionBox, { borderColor: 'rgba(175, 82, 222, 0.15)', marginTop: 15 }]}>
-                    <Text style={[styles.transcriptionLabel, { color: '#AF52DE' }]}>🗣️ Native (OS Dictation)</Text>
-
-                    {isNativeTranscribing ? (
-                        <View style={styles.loadingRow}>
-                            <ActivityIndicator size="small" color="#AF52DE" />
-                            <Text style={[styles.transcribingText, { color: '#AF52DE' }]}>Transcribing...</Text>
-                        </View>
-                    ) : (
-                        <Text style={styles.transcriptionText}>{nativeText || "Waiting..."}</Text>
+                        <Text style={styles.transcriptionText}>{text || "Waiting..."}</Text>
                     )}
                 </View>
             )}
 
             {hasAnyContent && (
                 <TouchableOpacity onPress={clear} style={styles.dismissButton}>
-                    <Text style={styles.dismissText}>Clear All</Text>
+                    <Text style={styles.dismissText}>Clear Transcription</Text>
                 </TouchableOpacity>
             )}
         </View>
     );
 }
+
 
 const styles = StyleSheet.create({
     container: {

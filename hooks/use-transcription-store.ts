@@ -1,12 +1,8 @@
 import { useEffect, useState } from 'react';
 
-// Shared store for Dual Transcription state
-let _localText: string | null = null;
-let _cloudText: string | null = null;
-let _nativeText: string | null = null;
-let _isLocalTranscribing = false;
-let _isCloudTranscribing = false;
-let _isNativeTranscribing = false;
+// Shared store for Transcription state (Groq Cloud)
+let _text: string | null = null;
+let _isTranscribing = false;
 
 const listeners = new Set<() => void>();
 
@@ -15,44 +11,20 @@ function notify() {
 }
 
 export const transcriptionStore = {
-    getLocalText: () => _localText,
-    getCloudText: () => _cloudText,
-    getNativeText: () => _nativeText,
-    getIsLocalTranscribing: () => _isLocalTranscribing,
-    getIsCloudTranscribing: () => _isCloudTranscribing,
-    getIsNativeTranscribing: () => _isNativeTranscribing,
+    getText: () => _text,
+    getIsTranscribing: () => _isTranscribing,
 
-    setLocalText: (text: string | null) => {
-        _localText = text;
+    setText: (text: string | null) => {
+        _text = text;
         notify();
     },
-    setCloudText: (text: string | null) => {
-        _cloudText = text;
-        notify();
-    },
-    setNativeText: (text: string | null) => {
-        _nativeText = text;
-        notify();
-    },
-    setIsLocalTranscribing: (val: boolean) => {
-        _isLocalTranscribing = val;
-        notify();
-    },
-    setIsCloudTranscribing: (val: boolean) => {
-        _isCloudTranscribing = val;
-        notify();
-    },
-    setIsNativeTranscribing: (val: boolean) => {
-        _isNativeTranscribing = val;
+    setIsTranscribing: (val: boolean) => {
+        _isTranscribing = val;
         notify();
     },
     clear: () => {
-        _localText = null;
-        _cloudText = null;
-        _nativeText = null;
-        _isLocalTranscribing = false;
-        _isCloudTranscribing = false;
-        _isNativeTranscribing = false;
+        _text = null;
+        _isTranscribing = false;
         notify();
     },
     subscribe: (listener: () => void) => {
@@ -62,32 +34,21 @@ export const transcriptionStore = {
 };
 
 export function useTranscriptionStore() {
-    const [localText, setLocalText] = useState(transcriptionStore.getLocalText());
-    const [cloudText, setCloudText] = useState(transcriptionStore.getCloudText());
-    const [nativeText, setNativeText] = useState(transcriptionStore.getNativeText());
-    const [isLocalTranscribing, setIsLocalTranscribing] = useState(transcriptionStore.getIsLocalTranscribing());
-    const [isCloudTranscribing, setIsCloudTranscribing] = useState(transcriptionStore.getIsCloudTranscribing());
-    const [isNativeTranscribing, setIsNativeTranscribing] = useState(transcriptionStore.getIsNativeTranscribing());
+    const [text, setText] = useState(transcriptionStore.getText());
+    const [isTranscribing, setIsTranscribing] = useState(transcriptionStore.getIsTranscribing());
 
     useEffect(() => {
         const unsubscribe = transcriptionStore.subscribe(() => {
-            setLocalText(transcriptionStore.getLocalText());
-            setCloudText(transcriptionStore.getCloudText());
-            setNativeText(transcriptionStore.getNativeText());
-            setIsLocalTranscribing(transcriptionStore.getIsLocalTranscribing());
-            setIsCloudTranscribing(transcriptionStore.getIsCloudTranscribing());
-            setIsNativeTranscribing(transcriptionStore.getIsNativeTranscribing());
+            setText(transcriptionStore.getText());
+            setIsTranscribing(transcriptionStore.getIsTranscribing());
         });
         return unsubscribe;
     }, []);
 
     return {
-        localText,
-        cloudText,
-        nativeText,
-        isLocalTranscribing,
-        isCloudTranscribing,
-        isNativeTranscribing,
+        text,
+        isTranscribing,
         clear: transcriptionStore.clear,
     };
 }
+

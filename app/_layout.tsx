@@ -6,7 +6,6 @@ import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import "../global.css";
 import { getDb, syncDb } from '../lib/db';
 import { useIndexingService } from '../lib/indexing-service';
-import { WhisperProvider } from '../lib/whisper-service';
 
 const queryClient = new QueryClient();
 
@@ -29,24 +28,22 @@ export default function RootLayout() {
     }, []);
 
     return (
-        <WhisperProvider>
-            <SafeAreaProvider>
-                <QueryClientProvider client={queryClient}>
-                    <SafeAreaView style={{ flex: 1, backgroundColor: '#fff' }}>
-                        <Stack screenOptions={{ headerShown: false }}>
-                            <Stack.Screen name="(tabs)" />
-                            <Stack.Screen
-                                name="memory"
-                                options={{
-                                    presentation: 'fullScreenModal',
-                                    animation: 'slide_from_bottom'
-                                }}
-                            />
-                        </Stack>
-                        <StatusBar style="dark" />
-                    </SafeAreaView>
-                </QueryClientProvider>
-            </SafeAreaProvider>
-        </WhisperProvider>
+        <SafeAreaProvider>
+            <QueryClientProvider client={queryClient}>
+                <SafeAreaView style={{ flex: 1, backgroundColor: '#fff' }}>
+                    <Stack screenOptions={{ headerShown: false }}>
+                        <Stack.Screen name="(tabs)" />
+                        <Stack.Screen
+                            name="memory"
+                            options={{
+                                presentation: 'fullScreenModal',
+                                animation: 'slide_from_bottom'
+                            }}
+                        />
+                    </Stack>
+                    <StatusBar style="dark" />
+                </SafeAreaView>
+            </QueryClientProvider>
+        </SafeAreaProvider>
     );
 }

@@ -9,15 +9,12 @@ import { useMemoryStore } from '../../hooks/use-memory-store';
 import { transcriptionStore } from '../../hooks/use-transcription-store';
 import { transcribeWithGroq } from '../../lib/groq-service';
 import { ts } from '../../lib/log';
-import { startNativeListening, stopNativeListening } from '../../lib/native-speech-service';
-import { useWhisperService } from '../../lib/whisper-service';
 
 const { width } = Dimensions.get('window');
 
 function CustomTabBar({ state, descriptors, navigation }: any) {
     const router = useRouter();
     const { memory } = useMemoryStore();
-    const { transcribeAudio, isWhisperReady } = useWhisperService();
     const [recording, setRecording] = useState<Audio.Recording | null>(null);
     const [isRecording, setIsRecording] = useState(false);
 
@@ -25,9 +22,6 @@ function CustomTabBar({ state, descriptors, navigation }: any) {
         try {
             const permission = await Audio.requestPermissionsAsync();
             if (permission.status === 'granted') {
-                // Start native speech recognition FIRST (live mic mode)
-                await startNativeListening();
-
                 await Audio.setAudioModeAsync({
                     allowsRecordingIOS: true,
                     playsInSilentModeIOS: true,
@@ -61,31 +55,15 @@ function CustomTabBar({ state, descriptors, navigation }: any) {
                 // Navigate to Agents tab immediately to show progress
                 navigation.navigate('index');
 
-                // Start Triple Transcription
+                // Start Transcription
                 transcriptionStore.clear();
-                transcriptionStore.setIsLocalTranscribing(true);
-                transcriptionStore.setIsCloudTranscribing(true);
-                transcriptionStore.setIsNativeTranscribing(true);
+                transcriptionStore.setIsTranscribing(true);
 
-                // 1. Cloud Transcription (Fast — sends file to Groq)
-                transcribeWithGroq(uri).then(cloudText => {
-                    transcriptionStore.setCloudText(cloudText);
-                    transcriptionStore.setIsCloudTranscribing(false);
-                    if (cloudText) console.log(`${ts()} [Cloud] Transcribed:`, cloudText);
-                });
-
-                // 2. Native Transcription (was listening live, now stop and get result)
-                stopNativeListening().then(nativeText => {
-                    transcriptionStore.setNativeText(nativeText);
-                    transcriptionStore.setIsNativeTranscribing(false);
-                    if (nativeText) console.log(`${ts()} [Native] Transcribed:`, nativeText);
-                });
-
-                // 3. Local Transcription (Slow — on-device Whisper Tiny)
-                transcribeAudio(uri).then(localText => {
-                    transcriptionStore.setLocalText(localText);
-                    transcriptionStore.setIsLocalTranscribing(false);
-                    if (localText) console.log(`${ts()} [Local] Transcribed:`, localText);
+                // Cloud Transcription (Fast — sends file to Groq)
+                transcribeWithGroq(uri).then(text => {
+                    transcriptionStore.setText(text);
+                    transcriptionStore.setIsTranscribing(false);
+                    if (text) console.log(`${ts()} [Groq] Transcribed:`, text);
                 });
             }
         } catch (err) {
