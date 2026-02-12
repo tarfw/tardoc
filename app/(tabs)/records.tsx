@@ -4,6 +4,7 @@ import { useRouter } from 'expo-router';
 import React, { useCallback, useEffect, useState } from 'react';
 import { ActivityIndicator, FlatList, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useTranscriptionStore } from '../../hooks/use-transcription-store';
 import { dbHelpers, subscribeToDbChanges } from '../../lib/db';
 import { useEmbeddingService } from '../../lib/embedding-service';
 
@@ -16,6 +17,22 @@ export default function RecordsScreen() {
     const [isLoading, setIsLoading] = useState(true);
     const { generateEmbedding, isEmbeddingReady, isEmbeddingGenerating, embeddingError } = useEmbeddingService();
     const [isSearching, setIsSearching] = useState(false);
+    const { text: transcribedText, isTranscribing } = useTranscriptionStore();
+
+    // Automatically update query when transcription text changes
+    useEffect(() => {
+        if (transcribedText) {
+            setQuery(transcribedText);
+        }
+    }, [transcribedText]);
+
+    // Robustly trigger search when transcription finishes
+    useEffect(() => {
+        if (!isTranscribing && transcribedText) {
+            setQuery(transcribedText);
+            handleSearch(transcribedText); // Search immediately with the text
+        }
+    }, [isTranscribing, transcribedText]);
 
     const fetchAllRecords = async () => {
         try {
@@ -38,8 +55,10 @@ export default function RecordsScreen() {
         }, [])
     );
 
-    const handleSearch = async () => {
-        if (!query.trim()) {
+    const handleSearch = async (overrideQuery?: string) => {
+        const activeSearchTerm = overrideQuery !== undefined ? overrideQuery : query;
+
+        if (!activeSearchTerm.trim()) {
             setResults([]);
             return;
         }
@@ -48,7 +67,7 @@ export default function RecordsScreen() {
 
         setIsSearching(true);
         try {
-            const vector = await generateEmbedding(query);
+            const vector = await generateEmbedding(activeSearchTerm);
             if (vector) {
                 const nodeResults = await dbHelpers.semanticSearchNodes(vector, 20);
                 setResults(nodeResults);
@@ -119,7 +138,7 @@ export default function RecordsScreen() {
                         placeholderTextColor="#A0A0A0"
                         value={query}
                         onChangeText={setQuery}
-                        onSubmitEditing={handleSearch}
+                        onSubmitEditing={() => handleSearch()}
                     />
                     {query.length > 0 && (
                         <TouchableOpacity onPress={() => setQuery('')} className="pr-1">

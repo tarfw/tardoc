@@ -57,8 +57,8 @@ function CustomTabBar({ state, descriptors, navigation }: any) {
             if (uri) {
                 console.log(`${ts()} Recording stopped and stored at`, uri);
 
-                // Navigate to Agents tab immediately to show progress
-                navigation.navigate('index');
+                // Navigate to Records tab immediately to show results
+                navigation.navigate('records');
 
                 // Start Transcription
                 transcriptionStore.clear();
@@ -213,7 +213,7 @@ export default function TabLayout() {
                 />
                 <Tabs.Screen
                     name="index"
-                    options={{ headerTitle: 'Agents' }}
+                    options={{ headerTitle: 'Intelligence' }}
                 />
                 <Tabs.Screen
                     name="relay"
