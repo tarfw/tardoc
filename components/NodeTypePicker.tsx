@@ -11,51 +11,68 @@ export const NodeTypePicker = ({ onClose }: NodeTypePickerProps) => {
     const router = useRouter();
 
     const nodeTypes = [
-        { id: 'Patient', icon: 'account', color: '#006AFF', label: 'Patient' },
-        { id: 'Diagnosis', icon: 'stethoscope', color: '#FF9500', label: 'Diagnosis' },
-        { id: 'Prescription', icon: 'pill', color: '#FF2D55', label: 'Prescription' },
-        { id: 'LabResult', icon: 'flask', color: '#5856D6', label: 'Lab Result' },
-        { id: 'Vitals', icon: 'heart-pulse', color: '#FF3B30', label: 'Vitals' },
-        { id: 'Procedure', icon: 'content-cut', color: '#34C759', label: 'Procedure' },
+        { id: 'Patient', icon: 'account', label: 'Patient' },
+        { id: 'Diagnosis', icon: 'stethoscope', label: 'Diagnosis' },
+        { id: 'Prescription', icon: 'pill', label: 'Script' },
+        { id: 'LabResult', icon: 'flask', label: 'Lab' },
+        { id: 'Vitals', icon: 'heart-pulse', label: 'Vitals' },
+        { id: 'Procedure', icon: 'content-cut', label: 'Surgery' },
     ];
 
     const handleSelect = (type: string) => {
         onClose();
-        // Use push to navigate to the new screen
         router.push(`/add-node?type=${type}`);
     };
 
     return (
         <View className="absolute inset-0 z-50 justify-end">
-            {/* Backdrop */}
+            {/* Darker backdrop for focus */}
             <TouchableOpacity
-                className="absolute inset-0 bg-black/40"
+                className="absolute inset-0 bg-black/60"
                 onPress={onClose}
                 activeOpacity={1}
             />
 
-            {/* Drawer Content */}
-            <View className="bg-white rounded-t-[25px] p-5 pb-10 overflow-hidden">
-                <View className="w-10 h-1 bg-gray-300 rounded-full self-center mb-5" />
-                <Text className="text-xl font-bold text-black mb-6 text-center">What do you want to add?</Text>
+            {/* Ultra-Modern Clinical Drawer */}
+            <View className="bg-white rounded-t-[60px] p-10 pb-16 shadow-2xl">
+                {/* Grabber */}
+                <View className="w-12 h-1.5 bg-gray-100 rounded-full self-center mb-10" />
 
-                <View className="flex-row flex-wrap justify-between gap-y-5">
+                <View className="mb-12">
+                    <Text className="text-4xl font-black text-gray-900 leading-tight">
+                        Protocol.
+                    </Text>
+                    <Text className="text-gray-400 text-[10px] font-black uppercase tracking-[2px] mt-1">
+                        Select object to initiate creation
+                    </Text>
+                </View>
+
+                <View className="flex-row flex-wrap justify-between">
                     {nodeTypes.map((item) => (
                         <TouchableOpacity
                             key={item.id}
-                            className="w-[30%] items-center gap-2"
+                            style={{ width: '48%' }}
+                            className="bg-gray-50 rounded-[32px] p-6 flex-row items-center border border-gray-100 mb-4"
                             onPress={() => handleSelect(item.id)}
+                            activeOpacity={0.8}
                         >
-                            <View
-                                className="w-16 h-16 rounded-[20px] items-center justify-center"
-                                style={{ backgroundColor: item.color + '20' }}
-                            >
-                                <MaterialCommunityIcons name={item.icon as any} size={32} color={item.color} />
+                            <View className="w-10 h-10 rounded-2xl bg-white items-center justify-center mr-3 shadow-sm shadow-black/5">
+                                <MaterialCommunityIcons name={item.icon as any} size={20} color="#006AFF" />
                             </View>
-                            <Text className="text-[13px] font-semibold text-gray-800">{item.label}</Text>
+                            <Text className="text-[13px] font-black text-gray-900 tracking-tight">
+                                {item.label}
+                            </Text>
                         </TouchableOpacity>
                     ))}
                 </View>
+
+                {/* Optional Footer or Dismiss */}
+                <TouchableOpacity
+                    onPress={onClose}
+                    className="mt-6 py-4 items-center"
+                >
+                    <Text className="text-[10px] font-black text-gray-300 uppercase tracking-[3px]">Dismiss Picker</Text>
+                </TouchableOpacity>
             </View>
         </View>
     );

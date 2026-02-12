@@ -5,6 +5,7 @@ import * as Haptics from 'expo-haptics';
 import { Tabs, useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import { Dimensions, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { NodeTypePicker } from '../../components/NodeTypePicker';
 import { useMemoryStore } from '../../hooks/use-memory-store';
 import { transcriptionStore } from '../../hooks/use-transcription-store';
@@ -16,6 +17,7 @@ const { width } = Dimensions.get('window');
 
 function CustomTabBar({ state, descriptors, navigation }: any) {
     const router = useRouter();
+    const insets = useSafeAreaInsets();
     const { memory } = useMemoryStore();
     const { openNodePicker } = useUIStore();
     const [recording, setRecording] = useState<Audio.Recording | null>(null);
@@ -75,7 +77,7 @@ function CustomTabBar({ state, descriptors, navigation }: any) {
     };
 
     return (
-        <View style={styles.tabBarContainer}>
+        <View style={[styles.tabBarContainer, { bottom: insets.bottom + 30 }]}>
             {/* Left Section: Memory + Tabs */}
             <View style={styles.leftWrapper}>
                 {/* Memory Selector (Floating Above Left) */}
@@ -110,8 +112,8 @@ function CustomTabBar({ state, descriptors, navigation }: any) {
                         };
 
                         let iconName: any;
-                        if (route.name === 'tasks') {
-                            iconName = isFocused ? 'checkbox-marked-circle' : 'checkbox-blank-circle-outline';
+                        if (route.name === 'records') {
+                            iconName = isFocused ? 'file-document' : 'file-document-outline';
                         } else if (route.name === 'index') {
                             iconName = isFocused ? 'square-rounded' : 'square-rounded-outline';
                         } else if (route.name === 'relay') {
@@ -154,14 +156,6 @@ function CustomTabBar({ state, descriptors, navigation }: any) {
 
                 {/* Right Container: Actions */}
                 <BlurView intensity={90} tint="light" style={styles.rightContainer}>
-                    <TouchableOpacity
-                        style={styles.actionItem}
-                        onPress={() => router.push('/search')}
-                        activeOpacity={0.7}
-                    >
-                        <MaterialCommunityIcons name="magnify" size={28} color="#000" />
-                    </TouchableOpacity>
-
                     <TouchableOpacity
                         style={[styles.actionItem, isRecording && styles.recordingButton]}
                         onPress={isRecording ? stopRecording : startRecording}
@@ -211,10 +205,11 @@ export default function TabLayout() {
                     },
                     tabBarShowLabel: false,
                 }}
+                initialRouteName="records"
             >
                 <Tabs.Screen
-                    name="tasks"
-                    options={{ headerTitle: 'Tasks & Appointments' }}
+                    name="records"
+                    options={{ headerTitle: 'Records' }}
                 />
                 <Tabs.Screen
                     name="index"

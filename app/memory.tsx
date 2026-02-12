@@ -1,6 +1,7 @@
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { SectionList, StatusBar, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useMemoryStore } from '../hooks/use-memory-store';
 import { syncDb } from '../lib/db';
 
@@ -100,6 +101,7 @@ const EMR_MEMORY: MemorySection[] = [
 
 export default function MemoryScreen() {
     const router = useRouter();
+    const insets = useSafeAreaInsets();
     const { setMemory } = useMemoryStore();
 
     const handleSelect = (title: string) => {
@@ -110,7 +112,7 @@ export default function MemoryScreen() {
     return (
         <View style={styles.container}>
             <StatusBar barStyle="dark-content" />
-            <View style={styles.header}>
+            <View style={[styles.header, { paddingTop: insets.top || 15 }]}>
                 <Text style={styles.headerTitle}>Doctor EMR Memories</Text>
                 <View style={styles.headerButtons}>
                     <TouchableOpacity onPress={() => syncDb()} style={styles.syncButton}>

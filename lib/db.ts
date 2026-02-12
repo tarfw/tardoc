@@ -4,11 +4,16 @@ const TURSO_URL = process.env.EXPO_PUBLIC_TURSO_URL || '';
 const TURSO_AUTH_TOKEN = process.env.EXPO_PUBLIC_TURSO_AUTH_TOKEN || '';
 
 let dbInstance: Database | null = null;
+let dbInitializationPromise: Promise<Database> | null = null;
 
 export async function getDb(): Promise<Database> {
-    if (!dbInstance) {
-        dbInstance = await connect({
-            path: 'doctor.db',
+    if (dbInitializationPromise) {
+        return dbInitializationPromise;
+    }
+
+    dbInitializationPromise = (async () => {
+        const db = await connect({
+            path: 'doctor_v3.db',
             url: TURSO_URL,
             authToken: TURSO_AUTH_TOKEN,
         });
@@ -39,7 +44,7 @@ export async function getDb(): Promise<Database> {
                 id TEXT PRIMARY KEY,
                 parentid TEXT,
                 nodetype TEXT NOT NULL,
-                universalcode TEXT NOT NULL,
+                universalcode TEXT,
                 title TEXT NOT NULL,
                 payload TEXT,
                 embedding F32_BLOB(384)
@@ -85,10 +90,14 @@ export async function getDb(): Promise<Database> {
         ];
 
         for (const statement of schema) {
-            await dbInstance.exec(statement);
+            await db.exec(statement);
         }
-    }
-    return dbInstance;
+
+        dbInstance = db;
+        return db;
+    })();
+
+    return dbInitializationPromise;
 }
 
 /**
@@ -161,6 +170,10 @@ export const dbHelpers = {
             return await db.all('SELECT * FROM nodes WHERE parentid = ?', [parentid]);
         }
         return await db.all('SELECT * FROM nodes');
+    },
+    getPatients: async () => {
+        const db = await getDb();
+        return await db.all('SELECT * FROM nodes WHERE nodetype = ?', ['Patient']);
     },
     insertNode: async (node: { id: string, nodetype: string, universalcode: string, title: string, parentid?: string, payload?: string }) => {
         const db = await getDb();
